@@ -20,7 +20,7 @@ if api_key:
     try:
         genai.configure(api_key=api_key)
         # Таны Playground дээр сонгосон хамгийн шилдэг загвар
-        model = genai.GenerativeModel('gemini-2.5-pro') 
+        model = genai.GenerativeModel('gemini-2.5-flash') 
         
         # Чатны түүхийг хадгалах
         if "messages" not in st.session_state:
