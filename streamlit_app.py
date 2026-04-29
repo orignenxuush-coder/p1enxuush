@@ -1,47 +1,58 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Апп-ын үндсэн тохиргоо
 st.set_page_config(page_title="Төслийн Үйлдвэр", page_icon="🏭", layout="wide")
 
-# Secrets-ээс түлхүүр унших
+# Нууц шургуулганаас түлхүүр унших
 if "GEMINI_API_KEY" in st.secrets:
-    api_key = st.secrets["GEMINI_API_KEY"]
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
-    api_key = None
+    st.error("⚠️ Secrets хэсэгт API Key хадгалагдаагүй байна!")
+    st.stop()
 
-st.title("🏭 Төслийн Үйлдвэр: Удирдлагын Систем")
-st.caption("Сүхбаатар аймаг, Баруун-Урт сум | Төсөл боловсруулах нэгдсэн төв")
+st.title("🏭 Төслийн Үйлдвэр")
+st.caption("Баруун-Урт сум | Төсөл боловсруулах төв")
 
-if api_key:
-    try:
-        genai.configure(api_key=api_key)
-        # Квот бага иддэг, хурдан Flash загвар
-        model = genai.GenerativeModel('gemini-2.5-flash') 
-        
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
+# Ажилчдын жагсаалт
+agents = ["АНХАА", "СУГАР", "МӨНХӨӨ", "ТОГТОХ", "ТУЯА", "БАТ-ОД", "НАРАА", "ЗӨВЛӨХ", "БҮГД"]
 
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+# --- АГЕНТ ДУУДАХ ТОВЧЛУУРУУД ---
+st.write("📢 Ажилтан дуудах:")
+cols = st.columns(len(agents))
+if "input_text" not in st.session_state:
+    st.session_state.input_text = ""
 
-        if prompt := st.chat_input("Захирал аа, даалгавраа энд бичнэ үү..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+for i, agent in enumerate(agents):
+    if cols[i].button(agent):
+        st.session_state.input_text = f"@{agent} "
 
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                message_placeholder.markdown("Ажилчид тооцоолол хийж байна... ⏳")
-                
-                response = model.generate_content(prompt)
-                full_response = response.text
-                
-                message_placeholder.markdown(full_response)
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-                
-    except Exception as e:
-        st.error(f"Алдаа гарлаа: {e}")
-else:
-    st.warning("⚠️ Streamlit Settings -> Secrets хэсэгт GEMINI_API_KEY-ээ оруулна уу.")
+# Чатны түүх
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Чат бичих хэсэг
+prompt = st.chat_input("Даалгавраа бичнэ үү...", key="chat_input")
+
+# Хэрэв товчлуур дарсан бол эсвэл текст бичсэн бол
+final_prompt = prompt if prompt else ""
+if st.session_state.input_text and not prompt:
+    st.info(f"Сонгосон ажилтан: {st.session_state.input_text}. Одоо даалгавраа бичээд Enter дарна уу.")
+
+if prompt:
+    full_command = st.session_state.input_text + prompt
+    st.session_state.messages.append({"role": "user", "content": full_command})
+    with st.chat_message("user"):
+        st.markdown(full_command)
+
+    with st.chat_message("assistant"):
+        response = model.generate_content(full_command)
+        st.markdown(response.text)
+        st.session_state.messages.append({"role": "assistant", "content": response.text})
+    
+    # Текстийг цэвэрлэх
+    st.session_state.input_text = ""
