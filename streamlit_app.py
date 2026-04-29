@@ -4,34 +4,28 @@ import google.generativeai as genai
 # Апп-ын үндсэн тохиргоо
 st.set_page_config(page_title="Төслийн Үйлдвэр", page_icon="🏭", layout="wide")
 
-# Зүүн талын цэс (Sidebar)
-with st.sidebar:
-    st.title("⚙️ Тохиргоо")
-    api_key = st.text_input("AIzaSyCOBIF2aZq-qxEZrZcpK9h64MO1Ej6WPEo", type="password")
-    st.info("AI Studio-оос авсан түлхүүрээ энд оруулж үйлдвэрээ асаана уу.")
-    st.markdown("---")
-    st.write("Үйлдвэрийн төлөв: " + ("🟢 Ажиллахад бэлэн" if api_key else "🔴 Түлхүүр хүлээж байна"))
+# Secrets-ээс түлхүүр унших
+if "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+else:
+    api_key = None
 
 st.title("🏭 Төслийн Үйлдвэр: Удирдлагын Систем")
 st.caption("Сүхбаатар аймаг, Баруун-Урт сум | Төсөл боловсруулах нэгдсэн төв")
 
-# AI-тай холбогдох хэсэг
 if api_key:
     try:
         genai.configure(api_key=api_key)
-        # Таны Playground дээр сонгосон хамгийн шилдэг загвар
-        model = genai.GenerativeModel('gemini-2.5-flash') 
+        # Квот бага иддэг, хурдан Flash загвар
+        model = genai.GenerativeModel('gemini-1.5-flash') 
         
-        # Чатны түүхийг хадгалах
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
-        # Хуучин чатуудыг харуулах
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # Захирлын тушаал авах хэсэг
         if prompt := st.chat_input("Захирал аа, даалгавраа энд бичнэ үү..."):
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
@@ -41,7 +35,6 @@ if api_key:
                 message_placeholder = st.empty()
                 message_placeholder.markdown("Ажилчид тооцоолол хийж байна... ⏳")
                 
-                # AI-аас хариу авах
                 response = model.generate_content(prompt)
                 full_response = response.text
                 
@@ -51,5 +44,4 @@ if api_key:
     except Exception as e:
         st.error(f"Алдаа гарлаа: {e}")
 else:
-    st.warning("⚠️ Захирал аа, үйлдвэрээ ажиллуулахын тулд зүүн талын цэсэнд 'Үйлдвэрийн түлхүүр'-ээ оруулна уу.")
-    st.image("https://images.unsplash.com/photo-1518186285589-2f7649de83e0?auto=format&fit=crop&q=80&w=1000", caption="Төслийн үйлдвэр таны тушаалыг хүлээж байна.")
+    st.warning("⚠️ Streamlit Settings -> Secrets хэсэгт GEMINI_API_KEY-ээ оруулна уу.")
