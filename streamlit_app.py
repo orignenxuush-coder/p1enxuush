@@ -7,7 +7,7 @@ st.set_page_config(page_title="Төслийн Үйлдвэр", page_icon="🏭",
 # Зүүн талын цэс (Sidebar)
 with st.sidebar:
     st.title("⚙️ Тохиргоо")
-    api_key = st.text_input("Үйлдвэрийн түлхүүрээ (API Key) оруулна уу:", type="password")
+    api_key = st.text_input("AIzaSyCOBIF2aZq-qxEZrZcpK9h64MO1Ej6WPEo", type="password")
     st.info("AI Studio-оос авсан түлхүүрээ энд оруулж үйлдвэрээ асаана уу.")
     st.markdown("---")
     st.write("Үйлдвэрийн төлөв: " + ("🟢 Ажиллахад бэлэн" if api_key else "🔴 Түлхүүр хүлээж байна"))
